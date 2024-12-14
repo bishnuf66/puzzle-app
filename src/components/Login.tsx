@@ -2,11 +2,16 @@ import { useState } from "react";
 import { decryptData } from "../lib/encryption";
 import SignupModal from "./SignupModal";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { setSessionItem } from "../lib/sessionManager";
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showSignupModal, setShowSignupModal] = useState(false);
+
+  const expirationTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
   // Handle user login
   const handleLogin = (email: string, password: string) => {
@@ -20,7 +25,10 @@ const Login: React.FC = () => {
     });
 
     if (user) {
+      setSessionItem("user", email);
+      setSessionItem("expirationTime", expirationTime);
       toast.success("Login successful!");
+      navigate("/game");
       console.log("Logged in as", email);
     } else {
       toast.error("Invalid credentials.");
