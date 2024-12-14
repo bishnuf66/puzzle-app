@@ -7,11 +7,11 @@
     'goat.jpg',
     'puppy.jpg',
     'tree.jpg',
-    'buld.jpg',
+    'bulb.jpg',
     'orangutan.jpg',
     'sunflower.jpg',
   ];
-  
+
   // Function to return a random image URL
   export const getRandomImage = () => {
     const randomIndex = Math.floor(Math.random() * images.length);
