@@ -1,25 +1,41 @@
 import { ToastContainer } from "react-toastify";
 import "./App.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import "react-toastify/dist/ReactToastify.css";
 import PuzzleGame from "./components/PuzzleGame";
 import DashBoard from "./components/DashBoard";
 import { AuthProvider } from "./context/AuthContext";
+import { UserGameProvider } from "./context/GameDataContext";
+import { TopPlayersProvider } from "./context/TopPlayersContext";
+import PrivateRoute from "./components/PrivateRoute"; // Import the PrivateRoute component
 
 function App() {
   return (
     <>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/game" element={<PuzzleGame />} />
-            <Route path="/dashboard" element={<DashBoard />} />
-          </Routes>
-        </Router>
-        <ToastContainer />
-      </AuthProvider>
+      <TopPlayersProvider>
+        <UserGameProvider>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                {/* Public Route */}
+                <Route path="/" element={<Login />} />
+
+                {/* Protected Routes */}
+                <Route
+                  path="/game"
+                  element={<PrivateRoute element={<PuzzleGame />} />}
+                />
+                <Route
+                  path="/dashboard"
+                  element={<PrivateRoute element={<DashBoard />} />}
+                />
+              </Routes>
+            </Router>
+            <ToastContainer />
+          </AuthProvider>
+        </UserGameProvider>
+      </TopPlayersProvider>
     </>
   );
 }
