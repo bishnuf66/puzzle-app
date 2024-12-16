@@ -13,11 +13,11 @@ function PreviewModal({ imgUrl, closePreviewModal }: PreviewModalProps) {
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timer); 
-          closePreviewModal(); 
+          clearInterval(timer);
+          closePreviewModal();
           return 0;
         }
-        return prevTime - 1; 
+        return prevTime - 1;
       });
     }, 1000);
 
