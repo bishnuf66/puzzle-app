@@ -2,19 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useGameData } from "../context/GameDataContext";
 import { getRandomImage } from "../lib/getRandomImage";
 import PreviewModal from "./PreviewModal";
+import GameWon from "./GameWon";
+import GameLost from "./GameLost";
 
 const PuzzleGame: React.FC = () => {
-  const { gameData, incrementLevel, updatetotalScore, resetGameData } =
+  const { gameData, incrementLevel, updatetotalScore, registerLoss } =
     useGameData();
   const [imgUrl, setImgUrl] = useState<string>("");
   const [positions, setPositions] = useState<number[]>([]);
   const [moveCount, setMoveCount] = useState<number>(0);
-  const [timer, setTimer] = useState<number>(600); // 10 minutes countdown in seconds
+  const [timer, setTimer] = useState<number>(600 - (gameData.level - 1) * 30); // Timer reduces starting from level 2 by 30 second with level increase from 10 minutes
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [gameLost, setGameLost] = useState<boolean>(false);
   const [openPreview, setOpenPreview] = useState<boolean>(false);
   const [correctPlacements, setCorrectPlacements] = useState<boolean[]>([]);
-
+  const [incorrectMoves, setIncorrectMoves] = useState<number>(0);
   // Fetch the image URL when the component mounts or level changes
   useEffect(() => {
     const fetchedImageUrl = getRandomImage();
@@ -36,7 +38,7 @@ const PuzzleGame: React.FC = () => {
     setPositions(shuffled);
     setCorrectPlacements(new Array(totalPieces).fill(false));
     setMoveCount(0);
-    setTimer(600); // Reset timer for each new level
+    setTimer(600 - (gameData.level - 1) * 30); // Reset timer for each new level
     setGameWon(false); // Reset the gameWon state on level change
   }, [gameData.level]);
 
@@ -49,6 +51,7 @@ const PuzzleGame: React.FC = () => {
         if (prev <= 1) {
           clearInterval(interval);
           setGameLost(true);
+          registerLoss();
           return 0;
         }
         return prev - 1;
@@ -86,6 +89,7 @@ const PuzzleGame: React.FC = () => {
       const isCorrectPlacement = positions[targetIndex] === targetIndex;
 
       if (!isCorrectPlacement) {
+        setIncorrectMoves((prev) => prev + 1);
         setTimer((prev) => Math.max(0, prev - 10));
       }
 
@@ -104,6 +108,7 @@ const PuzzleGame: React.FC = () => {
   const checkIfGameWon = () => {
     if (positions.every((pos, index) => pos === index) && !gameWon) {
       setGameWon(true);
+
       updatetotalScore(gameData.totalScore + timer * 10 - moveCount * 5); // Award points
     }
   };
@@ -120,6 +125,22 @@ const PuzzleGame: React.FC = () => {
     if (positions[index] === index) return "border-green-500 bg-green-100";
     if (correctPlacements[index]) return "border-green-300 bg-green-50";
     return "border-gray-300";
+  };
+
+  //handle game restart
+  const restartLevel = () => {
+    const gridSize = getGridSize();
+    const totalPieces = gridSize * gridSize;
+
+    const shuffled = [...Array(totalPieces).keys()].sort(
+      () => Math.random() - 0.5
+    );
+
+    setPositions(shuffled);
+    setCorrectPlacements(new Array(totalPieces).fill(false));
+    setMoveCount(0);
+    setTimer(600 - (gameData.level - 1) * 30);
+    setGameLost(false); // Remove the "lost" state
   };
 
   return (
@@ -139,6 +160,15 @@ const PuzzleGame: React.FC = () => {
         <p>Time: {formatTime(timer)}</p>
         <p>Moves: {moveCount}</p>
         <p>Total Score: {gameData.totalScore}</p>
+        <p className="group relative inline-block">
+          Loss Count This level:
+          <span className="cursor-pointer">
+            {gameData.lossCount}
+            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max p-2 text-white bg-gray-800 text-sm rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:visible">
+              3 losses in a row resets your game
+            </span>
+          </span>
+        </p>
       </div>
 
       <div
@@ -148,7 +178,7 @@ const PuzzleGame: React.FC = () => {
         {positions.map((pos, index) => (
           <div
             key={index}
-            draggable
+            draggable={!gameWon} // Disable dragging when the game is won
             onDragStart={(e) => handleDragStart(e, index)}
             onDrop={(e) => handleDrop(e, index)}
             onDragOver={(e) => e.preventDefault()}
@@ -167,27 +197,19 @@ const PuzzleGame: React.FC = () => {
       </div>
 
       {gameWon && (
-        <div className="mt-5 text-green-600">
-          <h2 className="text-2xl font-bold">
-            Congratulations! You won the game!
-          </h2>
-          <button
-            className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
-            onClick={() => {
-              incrementLevel();
-              setGameWon(false);
-            }}
-          >
-            Next Level
-          </button>
-        </div>
+        <GameWon
+          onNextLevel={() => {
+            incrementLevel();
+            setGameWon(false);
+          }}
+          timer={timer}
+          moveCount={moveCount}
+          initialTime={600 - (gameData.level - 1) * 30} // Pass initial time
+          incorrectMoves={incorrectMoves} // Pass incorrect moves
+        />
       )}
 
-      {gameLost && (
-        <div className="mt-5 text-red-600">
-          <h2 className="text-2xl font-bold">Time's up! You lost the game.</h2>
-        </div>
-      )}
+      {gameLost && <GameLost onRestart={restartLevel} />}
 
       {openPreview && (
         <PreviewModal
