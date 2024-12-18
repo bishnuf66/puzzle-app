@@ -6,6 +6,9 @@ import React, {
   ReactNode,
 } from "react";
 
+// Import the encryption and decryption functions
+import { encryptData, decryptData } from "../lib/encryption";
+
 interface AuthContextType {
   user: string | null;
   isLoading: boolean;
@@ -27,23 +30,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check for existing authentication on initial load
   useEffect(() => {
-    // Check if user is already logged in (e.g., from sessionStorage)
     const storedUser = sessionStorage.getItem("user");
-    const expirationTime = sessionStorage.getItem("expirationTime");
+    const storedExpirationTime = sessionStorage.getItem("expirationTime");
 
-    if (storedUser && expirationTime) {
-      const currentTime = Date.now();
-      if (currentTime < Number(expirationTime)) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error: unknown) {
-          console.log(error);
-          // Clear invalid stored data
+    if (storedUser && storedExpirationTime) {
+      try {
+        // Decrypt user data before setting it
+        const decryptedUser = decryptData(storedUser);
+
+        // Decrypt expiration time before comparing
+        const decryptedExpirationTime = decryptData(storedExpirationTime);
+        const currentTime = Date.now();
+
+        // Check if the expiration time is valid (not null or expired)
+        if (
+          decryptedExpirationTime &&
+          currentTime < Number(decryptedExpirationTime)
+        ) {
+          // If the session is still valid, set the user data
+          setUser(decryptedUser);
+        } else {
+          // If session expired, clear the user data
           sessionStorage.removeItem("user");
           sessionStorage.removeItem("expirationTime");
         }
-      } else {
-        // If session expired, clear the user data
+      } catch (error: unknown) {
+        console.log(error);
+        // Clear invalid stored data if decryption fails
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("expirationTime");
       }
@@ -54,13 +67,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Login function
   const login = (userData: string) => {
-    // Save user data to state and sessionStorage
-    setUser(userData);
-    sessionStorage.setItem("user", JSON.stringify(userData));
+    // Encrypt user data before saving to sessionStorage
+    const encryptedUserData = encryptData(userData);
 
     // Set expiration time (24 hours from now)
-    const expirationTime = Date.now() + 24 * 60 * 60 * 1000;
-    sessionStorage.setItem("expirationTime", expirationTime.toString());
+    const expirationTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const encryptedExpirationTime = encryptData(expirationTime.toString());
+
+    // Save encrypted user data and expiration time to sessionStorage
+    setUser(userData);
+    sessionStorage.setItem("user", encryptedUserData);
+    sessionStorage.setItem("expirationTime", encryptedExpirationTime);
   };
 
   // Logout function
@@ -78,8 +95,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     isAuthenticated:
-      !!user &&
-      Date.now() < (Number(sessionStorage.getItem("expirationTime")) || 0),
+      !!user && // Ensure `user` exists
+      !!sessionStorage.getItem("expirationTime") && // Ensure expiration time exists
+      !!decryptData(sessionStorage.getItem("expirationTime")!) && // Ensure expiration time is decrypted
+      Date.now() <
+        Number(decryptData(sessionStorage.getItem("expirationTime")!) || 0), // Compare expiration time with current time
   };
 
   return (

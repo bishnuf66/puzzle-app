@@ -18,7 +18,7 @@ function TopPlayersList() {
               {index + 1}.
             </span>
             <span className="text-gray-700">{player.email}</span>
-            <span className="text-lg font-semibold text-orange-600">
+            <span className="text-lg font-semibold text-orange-600 m-2">
               {player.totalScore}
             </span>
           </li>

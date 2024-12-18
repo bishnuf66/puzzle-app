@@ -9,6 +9,7 @@ const GameDashboard = () => {
   const { gameData } = useGameData();
   const navigate = useNavigate();
 
+  console.log(gameData);
   const handleStartGame = () => {
     navigate("/game");
   };
@@ -36,16 +37,14 @@ const GameDashboard = () => {
 
         <div className="space-y-4  ">
           <p>
-            <strong className="text-gray-700">Email:</strong>{" "}
-            {gameData.email || "Not Logged In"}
+            <strong className="text-gray-700">Email:</strong> {gameData.email}
           </p>
           <p>
-            <strong className="text-gray-700">Level:</strong>{" "}
-            {gameData.level || "N/A"}
+            <strong className="text-gray-700">Level:</strong> {gameData.level}
           </p>
           <p>
             <strong className="text-gray-700">Total Score:</strong>{" "}
-            {gameData.totalScore || 0}
+            {gameData.totalScore}
           </p>
         </div>
 
