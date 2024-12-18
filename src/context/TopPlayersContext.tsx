@@ -50,8 +50,9 @@ export const TopPlayersProvider: React.FC<{ children: ReactNode }> = ({
 
       // Extract players and sort by totalScore in descending order
       const players: PlayerData[] = Object.values(parsedGameData)
-        .filter((player: any) => player.email && player.totalScore >= 0)
-        .sort((a: PlayerData, b: PlayerData) => b.totalScore - a.totalScore)
+        .filter((player: any) => player.email && player.totalScore >= 0) // Filter valid players
+        .map((player: any) => player as PlayerData) // Cast to PlayerData
+        .sort((a: PlayerData, b: PlayerData) => b.totalScore - a.totalScore) // Sorting by totalScore
         .slice(0, 5); // Take the top 5 players
 
       setTopPlayers(players);

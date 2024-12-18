@@ -56,15 +56,18 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     try {
       // Decrypt the saved game data
       const decryptedGameData = decryptData(savedGameData);
-      const parsedGameData = decryptedGameData
+      const parsedGameData: { [key: string]: UserGameData } = decryptedGameData
         ? JSON.parse(decryptedGameData)
         : {};
+
+      const userEmail = email || ""; // Ensure email is a valid string
+
       return (
-        parsedGameData[email] || {
+        parsedGameData[userEmail] || {
           ...initialGameData,
-          email: email ? decryptData(email) : "",
+          email: userEmail ? decryptData(userEmail) : "", // Decrypt email here if necessary
         }
-      ); // Decrypt email here if necessary
+      );
     } catch (error) {
       console.error("Error decrypting game data:", error);
       return { ...initialGameData, email: email ? decryptData(email) : "" }; // Fallback to initial data if decryption fails
