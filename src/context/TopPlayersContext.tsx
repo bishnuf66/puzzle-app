@@ -7,6 +7,9 @@ import React, {
   useCallback,
 } from "react";
 
+// Import encryption and decryption functions
+import { decryptData } from "../lib/encryption";
+
 // Define the structure of a player's data
 interface PlayerData {
   email: string;
@@ -32,15 +35,30 @@ export const TopPlayersProvider: React.FC<{ children: ReactNode }> = ({
   // Function to fetch and calculate top players from localStorage
   const fetchTopPlayers = useCallback(() => {
     const savedGameData = localStorage.getItem("userGameData");
-    const parsedGameData = savedGameData ? JSON.parse(savedGameData) : {};
 
-    // Extract players and sort by totalScore in descending order
-    const players: PlayerData[] = Object.values(parsedGameData)
-      .filter((player: any) => player.email && player.totalScore >= 0)
-      .sort((a: PlayerData, b: PlayerData) => b.totalScore - a.totalScore)
-      .slice(0, 5); // Take the top 5 players
+    if (!savedGameData) {
+      setTopPlayers([]);
+      return;
+    }
 
-    setTopPlayers(players);
+    try {
+      // Decrypt the saved game data
+      const decryptedGameData = decryptData(savedGameData);
+      const parsedGameData = decryptedGameData
+        ? JSON.parse(decryptedGameData)
+        : {};
+
+      // Extract players and sort by totalScore in descending order
+      const players: PlayerData[] = Object.values(parsedGameData)
+        .filter((player: any) => player.email && player.totalScore >= 0)
+        .sort((a: PlayerData, b: PlayerData) => b.totalScore - a.totalScore)
+        .slice(0, 5); // Take the top 5 players
+
+      setTopPlayers(players);
+    } catch (error) {
+      console.error("Error decrypting game data:", error);
+      setTopPlayers([]); // Set empty players if decryption fails
+    }
   }, []);
 
   // Fetch top players on component mount
