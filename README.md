@@ -18,6 +18,10 @@ puzzle app
 
 npm install
 
+### add .env
+
+VITE_API_SECRET_KEY="yoursecretkey"
+
 ### Start the development server:
 
 npm run dev
