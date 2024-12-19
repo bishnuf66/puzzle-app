@@ -9,10 +9,12 @@ import { AuthProvider } from "./context/AuthContext";
 import { UserGameProvider } from "./context/GameDataContext";
 import { TopPlayersProvider } from "./context/TopPlayersContext";
 import PrivateRoute from "./components/PrivateRoute"; // Import the PrivateRoute component
+import PerformanceStats from "./components/PerformanceStats";
 
 function App() {
   return (
     <>
+      <PerformanceStats />
       <TopPlayersProvider>
         <UserGameProvider>
           <AuthProvider>

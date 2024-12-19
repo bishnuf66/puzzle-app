@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { useEffect } from "react";
+import PerformanceStats from "./PerformanceStats";
 const GameDashboard = () => {
   const { logout } = useAuth();
   const { gameData, refreshGameData } = useGameData();
@@ -24,6 +25,7 @@ const GameDashboard = () => {
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-6">
+      <PerformanceStats />
       <div className="bg-gray-100 p-6 border rounded-lg shadow-md flex-1">
         <div className="flex flex-row justify-between">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">
