@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { formatTime } from "../lib/formatTime";
 
 interface GameWonProps {
   onNextLevel: () => void;
@@ -64,7 +65,7 @@ const GameWon: React.FC<GameWonProps> = ({
 
         <div className="space-y-2 mb-6">
           <p className="text-lg">
-            <span className="font-semibold">Time Left:</span> {secondsLeft}{" "}
+            <span className="font-semibold">Next level in:</span> {secondsLeft}{" "}
             seconds
           </p>
           <p className="text-lg">
@@ -107,13 +108,5 @@ const GameWon: React.FC<GameWonProps> = ({
     </div>
   );
 };
-
-function formatTime(time: number) {
-  const minutes = Math.floor(time / 60);
-  const seconds = time % 60;
-  return `${minutes < 10 ? "0" : ""}${minutes}:${
-    seconds < 10 ? "0" : ""
-  }${seconds}`;
-}
 
 export default GameWon;

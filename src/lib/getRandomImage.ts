@@ -18,7 +18,7 @@
     return images[randomIndex];
   };
 
-  // export const randomImageUrl = getRandomImage(); 
+  export const randomImageUrl = getRandomImage(); 
   
    
 
