@@ -4,6 +4,7 @@ import React, {
   useContext,
   ReactNode,
   useCallback,
+  useEffect,
 } from "react";
 
 // Import encryption and decryption functions
@@ -11,7 +12,7 @@ import { encryptData, decryptData } from "../lib/encryption";
 
 // Define the structure of a player's data
 interface UserGameData {
-  email: string; // Ensure the email is always a string
+  email: string;
   level: number;
   totalScore: number;
   lossCount: number;
@@ -24,14 +25,12 @@ interface UserGameContextType {
   resetGameData: () => void;
   registerLoss: () => void;
   saveGame: () => void;
+  refreshGameData: () => void;
 }
 
-// Retrieve email from sessionStorage
-const emailData = sessionStorage.getItem("user") || "";
-const email = decryptData(emailData);
-
+// Initial data for the game
 const initialGameData: UserGameData = {
-  email, // Assume sessionStorage stores plaintext email
+  email: "",
   level: 1,
   totalScore: 0,
   lossCount: 0,
@@ -44,28 +43,8 @@ const UserGameContext = createContext<UserGameContextType | undefined>(
 export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [gameData, setGameData] = useState<UserGameData>(() => {
-    const savedGameData = localStorage.getItem("userGameData");
+  const [gameData, setGameData] = useState<UserGameData>(initialGameData);
 
-    if (!savedGameData) {
-      return { ...initialGameData };
-    }
-
-    try {
-      // Decrypt and parse the saved game data
-      const decryptedGameData = decryptData(savedGameData);
-      const parsedGameData: { [key: string]: UserGameData } = decryptedGameData
-        ? JSON.parse(decryptedGameData)
-        : {};
-
-      return parsedGameData[email] || initialGameData;
-    } catch (error) {
-      console.error("Error decrypting game data:", error);
-      return initialGameData; // Fallback to initial data if decryption fails
-    }
-  });
-
-  // Update localStorage with the current user's game data (encrypted)
   const updateLocalStorage = useCallback((newGameData: UserGameData) => {
     const savedGameData = localStorage.getItem("userGameData");
     const parsedGameData = savedGameData
@@ -81,7 +60,52 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
-  // Method to increment level
+  // Fetch the latest game data for the logged-in user
+  const refreshGameData = useCallback(() => {
+    const emailData = sessionStorage.getItem("user");
+    const email = emailData ? decryptData(emailData) : "";
+
+    if (email) {
+      const savedGameData = localStorage.getItem("userGameData");
+      if (savedGameData) {
+        try {
+          const decryptedGameData = decryptData(savedGameData);
+          const parsedGameData: { [key: string]: UserGameData } =
+            decryptedGameData ? JSON.parse(decryptedGameData) : {};
+          const updatedGameData = parsedGameData[email] || {
+            ...initialGameData,
+            email,
+          };
+          setGameData(updatedGameData);
+        } catch (error) {
+          console.error("Error decrypting game data:", error);
+          setGameData({ ...initialGameData, email }); // Fallback to initial data
+        }
+      } else {
+        setGameData({ ...initialGameData, email });
+      }
+    } else {
+      setGameData(initialGameData); // Reset to initial data if no user is logged in
+    }
+  }, []);
+
+  // Listen for changes in the logged-in user's email
+  useEffect(() => {
+    refreshGameData(); // Fetch game data when the component mounts
+
+    // Optionally, listen for changes in `sessionStorage` (if email is updated dynamically)
+    const handleStorageChange = () => {
+      refreshGameData();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [refreshGameData]);
+
+  // Other context methods
   const incrementLevel = useCallback(() => {
     const updatedGameData = {
       ...gameData,
@@ -92,7 +116,6 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     updateLocalStorage(updatedGameData);
   }, [gameData, updateLocalStorage]);
 
-  // Method to update totalScore
   const updatetotalScore = useCallback(
     (newtotalScore: number) => {
       const updatedGameData = {
@@ -105,7 +128,6 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     [gameData, updateLocalStorage]
   );
 
-  // Method to reset game data
   const resetGameData = useCallback(() => {
     const resetData = {
       ...initialGameData,
@@ -115,7 +137,6 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     updateLocalStorage(resetData);
   }, [gameData, updateLocalStorage]);
 
-  // Method to register a loss
   const registerLoss = useCallback(() => {
     const updatedLossCount = gameData.lossCount + 1;
 
@@ -131,7 +152,6 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [gameData, resetGameData, updateLocalStorage]);
 
-  // Method to save the current game data explicitly
   const saveGame = useCallback(() => {
     updateLocalStorage(gameData);
   }, [gameData, updateLocalStorage]);
@@ -143,6 +163,7 @@ export const UserGameProvider: React.FC<{ children: ReactNode }> = ({
     resetGameData,
     registerLoss,
     saveGame,
+    refreshGameData,
   };
 
   return (
@@ -160,5 +181,5 @@ export const useGameData = () => {
     throw new Error("useGameData must be used within a UserGameProvider");
   }
 
-  return context;
+  return { ...context, refreshGameData: context.refreshGameData };
 };

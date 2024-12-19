@@ -3,10 +3,10 @@ import TopPlayersList from "./TopPlayersList";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-
+import { useEffect } from "react";
 const GameDashboard = () => {
   const { logout } = useAuth();
-  const { gameData } = useGameData();
+  const { gameData, refreshGameData } = useGameData();
   const navigate = useNavigate();
   const handleStartGame = () => {
     navigate("/game");
@@ -17,6 +17,10 @@ const GameDashboard = () => {
     logout();
     navigate("/");
   };
+
+  useEffect(() => {
+    refreshGameData(); // Ensure the latest data is loaded on component mount
+  }, [refreshGameData]);
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-6">
