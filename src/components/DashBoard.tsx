@@ -8,8 +8,6 @@ const GameDashboard = () => {
   const { logout } = useAuth();
   const { gameData } = useGameData();
   const navigate = useNavigate();
-
-  console.log(gameData);
   const handleStartGame = () => {
     navigate("/game");
   };

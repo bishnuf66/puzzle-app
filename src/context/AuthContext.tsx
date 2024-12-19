@@ -37,11 +37,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Decrypt user data before setting it
         const decryptedUser = decryptData(storedUser);
-
         // Decrypt expiration time before comparing
         const decryptedExpirationTime = decryptData(storedExpirationTime);
         const currentTime = Date.now();
-
         // Check if the expiration time is valid (not null or expired)
         if (
           decryptedExpirationTime &&
