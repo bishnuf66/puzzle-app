@@ -5,7 +5,6 @@ export function xorEncryptDecrypt(data: string): string {
   let result = '';
   for (let i = 0; i < data.length; i++) {
     // XOR each character of the data with the salt (repeated if necessary)
-    console.log("this is sala",salt,"this is data",data)
     result += String.fromCharCode(data?.charCodeAt(i) ^ salt?.charCodeAt(i % salt?.length));
   }
   return result;
